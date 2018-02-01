@@ -1,0 +1,4 @@
+This is the training data for my first model.
+- used Random Forest with 100 trees
+- populated false cases by crawling without a classifier over a subset of seed links, taking
+    one or two of the highly ranked sites from each.
