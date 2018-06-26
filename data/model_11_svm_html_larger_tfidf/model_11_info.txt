@@ -1,0 +1,14 @@
+Support Vector Machine, tf-idf
+
+This was testing the Non-PDF simple case, as described in Section 5.2 of my Report.
+In this particular example, I tried to extend the size of the negative set to see if a larger training
+set would improve the performance of the SVM classifier. It didn't have any significant impact so
+was omitted from the report.
+This run used the Support Vector Machine classifier with the tf-idf model.
+
+Positive Set:
+Non-PDF syllabi from summer work
+
+Negative Set:
+Non-PDF non-syllabi gathered by running the crawler without a classifier and selecting pages that weren't
+syllabi. Extended with extra manual examples.

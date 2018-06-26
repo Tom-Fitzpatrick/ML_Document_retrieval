@@ -1,15 +1,19 @@
+import PyPDF2
+import os
 from PriorityQueue import PriorityQueue
 import string
-
+import urllib.request
 import requests
 from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin, urldefrag
+from langdetect import detect
 import ssl
 import re
 
-# context = ssl._create_unverified_context()
 
+# context = ssl._create_unverified_context()
+TIMEOUT = 10
 regex = re.compile(
     r'^(?:http|ftp)s?://'  # http:// or https://
     r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -123,62 +127,62 @@ class Crawler:
         self.session.mount('https://', crawlAdapter)
         self.session.mount('http://', crawlAdapter)
 
-    #initial crawl function, takes seed page as input
-    def crawl_site(self, seed):
+    #initial crawl function, takes seed page as input, returns the list of found documents
+    def crawl_site(self, seed, max_found, crawl_pdfs):
         uni_key_words = self.get_home_words(seed);
 
         tocrawl = PriorityQueue()
         tocrawl.put(1, seed)
         crawled = []
-        syllabi = PriorityQueue()
-        errors = []
+        # syllabi = PriorityQueue()
         found_syllabi = []
+        count = 0
 
-        while not tocrawl.is_empty() and len(crawled) < self.max_pages:
-            popped = tocrawl.pop()
-            page = popped[1]
-            valid_type = True
-            for type in ['.pdf', '.ashx', '.doc', '.jpg', '.JPG', '.xlsx',
-                         '.ods', '.ppt', '.png', '.zip', '.mp3', '.ics', '.jpeg']:
-                if type in page:
-                    valid_type = False
-                    break
+        uni_content, outlinks = self.get_content(seed, uni_key_words, count)
 
-            if page not in crawled and valid_type:     #can check for pdf and skip here
-                try:
-                    response = self.session.get(page, headers={'User-Agent': 'Mozilla/5.0'})
-                except Exception as e:  # requests.exceptions.ConnectionError:
-                    # logging.error(traceback.format_exc())
-                    errors.append(page)
-                    print("erronous pages: " + str(len(errors)))
-                    print(errors)
-                    continue
-                html = response.content
-                soup = BeautifulSoup(html, 'lxml')
+        count += 1
+        try:
+            lang = str(detect(uni_content))
+        except:
+            lang = 'not_detected'
 
-                page_features = self.prepare_page(soup)
+        # print("language: " + lang)
+        if lang == "en":
+            print("crawled_uni")
+            while not tocrawl.is_empty() and len(crawled) < self.max_pages and len(found_syllabi) < max_found:
+                popped = tocrawl.pop()
+                page = popped[1]
+                valid_type = True
+                invalid_types = ['.ashx', '.doc', '.jpg', '.JPG', '.xlsx',
+                             '.ods', '.ppt', '.png', '.zip', '.mp3', '.ics', '.jpeg']
+                if not crawl_pdfs:
+                    invalid_types.append('.pdf')
 
-                print("Testing page: " + str(page))
-                # for i in page_features[0]:
-                #     print(i)
+                for type in invalid_types:
+                    if type in page:
+                        valid_type = False
+                        break
 
-                prediction = self.model.predict(page_features)
-                print(prediction)
-                if prediction == 'yes':
-                    found_syllabi.append(page)
+                if page not in crawled and valid_type:     #can check for pdf and skip here
+                    count += 1
+                    content, outlinks = self.get_content(page, uni_key_words, count)
 
+                    page_features = self.prepare_page(content)
 
+                    prediction = self.model.predict(page_features)
+                    print(page)
+                    print(prediction)
+                    if prediction == 'yes':
+                        found_syllabi.append(page)
 
-                outlinks = self.get_ranked_links(soup, page, uni_key_words)
+                    # if popped[0] >= syllabi.lowest_rank():
+                    #     syllabi.put(popped[0], popped[1])
+					#
+                    #     if syllabi.length() > 50:
+                    #         syllabi.chop()
 
-                if popped[0] >= syllabi.lowest_rank():
-                    syllabi.put(popped[0], popped[1])
-
-                    if syllabi.length() > 50:
-                        syllabi.chop()
-
-                self.union(tocrawl, outlinks)  # deal with union of outlinks and tocrawl
-                crawled.append(page)
+                    self.union(tocrawl, outlinks)
+                    crawled.append(page)
 
         return found_syllabi
 
@@ -188,6 +192,7 @@ class Crawler:
             if e[1] not in addresses_to_crawl:
                 toCrawl.put(e[0], e[1])
 
+    # gets the links from the content of a page and generates their priorities
     def get_ranked_links(self, html_soup, page, uni_keys):
         links = PriorityQueue()
         for link in html_soup.findAll('a'):
@@ -207,13 +212,12 @@ class Crawler:
     def is_absolute(self, url):
         return bool(urlparse(url).netloc)
 
+    # generates a priority for a link based off keywords which are specific to the type of document being searched for
     def gen_priority(self, link, unikeys):
         priority = 0
 
         low_link = link.lower()
 
-        # if seed.lower() in low_link:
-        #     priority = priority + 500
         for word in unikeys:
             if type(word) is str:
                 if word.lower() in low_link:
@@ -228,12 +232,13 @@ class Crawler:
                 priority = priority - 1000
         return priority
 
+    # pulls keywords from the title of a page, used for setting priorities based off university name etc.
     def get_home_words(self, home_page):
         # print("home page is : " + str(home_page))
         s = set(stopwords.words('english'))
         common_words = ["university", "college", "institute", "technology", "home", "the", "science"]
         try:
-            response = self.session.get(home_page, headers={'User-Agent': 'Mozilla/5.0'})
+            response = self.session.get(home_page, headers={'User-Agent': 'Mozilla/5.0'}, timeout=TIMEOUT)
         except:
             print("couldn't access page")
             return None, None
@@ -256,17 +261,70 @@ class Crawler:
                 title_words.remove(word)
 
         # parsed_url = urlparse(home_page)
-        print(title_words)
+        # print(title_words)
         return title_words
 
-    def prepare_page(self, soup):
+    # returns the text content of the document which the link points to
+    def get_content(self, link, uni_key_words, count):
+        content = ''
+
+        if '.pdf' in link:
+            try:
+                response = urllib.request.urlopen(link)
+            except Exception as e:  # requests.exceptions.ConnectionError:
+                # logging.error(traceback.format_exc())
+                # print("erronous page: " + str(link))                                                                      %%%%%%%%%%%%%%%%%
+                return '', []
+
+            with open('..\\temp_files\\pdf_' + str(count) + '.pdf', 'wb') as out_file:
+
+                out_file.write(response.read())
+
+            with open("..\\temp_files\\pdf_" + str(count) + '.pdf', 'rb') as pdf_obj:
+                try:
+                    read_pdf = PyPDF2.PdfFileReader(pdf_obj)
+                except:
+                    print("failed to read: " + link)
+                    return '', []
+                try:                                            # just added this try except to deal witha weird error about accessing num pages, may need to delete
+                    if read_pdf.numPages < 12:
+                        if read_pdf.isEncrypted:
+                            read_pdf.decrypt("")
+                            for i in range(0, read_pdf.numPages):
+                                content = content + ' ' + read_pdf.getPage(0).extractText()
+                        else:
+                            content = content + ' ' + read_pdf.getPage(0).extractText()
+                    else:
+                        print("too long: " + link)
+                except:
+                    return '', []
+            outlinks = []
+            os.remove("..\\temp_files\\pdf_" + str(count) + '.pdf')
+        else:
+            try:
+                response = self.session.get(link, headers={'User-Agent': 'Mozilla/5.0'}, timeout=TIMEOUT)
+            except Exception as e:  # requests.exceptions.ConnectionError:
+                # logging.error(traceback.format_exc())
+                print("erronous page: " + str(link))
+                return '', []
+            html = response.content
+            soup = BeautifulSoup(html, 'lxml')
+
+            outlinks = self.get_ranked_links(soup, link, uni_key_words)
+
+            for script in soup(["script", "style"]):
+                script.decompose()  # rip it out
+
+            # get text
+            content = soup.get_text()
+
+        return content, outlinks
+
+    # converts text of a page to the representation being used by the classifier
+    def prepare_page(self, text):
         translator = str.maketrans(string.punctuation, ' ' * len(string.punctuation))
 
-        for script in soup(["script", "style"]):
-            script.decompose()  # rip it out
 
-        # get text
-        text = soup.get_text()
 
         # break into lines and remove leading and trailing space on each
         lines = (line.strip() for line in text.splitlines())

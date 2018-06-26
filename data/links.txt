@@ -91,6 +91,7 @@ www.pusan.ac.kr
 www.iisc.ernet.in
 www.manchester.ac.uk
 www.ufrj.br
+www.ufrj.br
 www.unh.edu
 www.fsu.edu
 www.unipa.it
@@ -253,7 +254,7 @@ www.fu-berlin.de
 www.ndsu.edu
 www.uniupo.it
 www.uri.edu
-www.csu.edu.cn
+www.csu.edu.cnl
 www.ru.nl
 www.gunma-u.ac.jp
 www.sun.ac.za

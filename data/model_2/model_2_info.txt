@@ -1,0 +1,6 @@
+found_syllabi_ds3 contains the output from crawling after testing on all pdf and html positive links with negatives
+taken from the basic classifier FPs and a sample of negatives from the no-classifier initial crawl (about 40, or as many
+as there were pdf samples).
+
+found_syllabi_ds4 contains the output from crawling after training on just html + negs from the first classifier run.
+NO pdfs

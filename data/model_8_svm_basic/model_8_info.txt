@@ -1,0 +1,10 @@
+Support Vector Machine, Bag of Words
+
+This was testing the Non-PDF simple case, as described in Section 5.2 of my Report.
+
+Positive Set:
+Non-PDF syllabi from summer work
+
+Negative Set:
+Non-PDF non-syllabi gathered by running the crawler without a classifier and selecting pages that weren't
+syllabi.

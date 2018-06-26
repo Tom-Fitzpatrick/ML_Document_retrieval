@@ -1,0 +1,5 @@
+Accuracy: 0.92 (+/- 0.02) [ensemble]
+Testing:
+After training on training set, test set evaluation: accuracy: 0.811594202899[('prec', array([ 0.75609756,  0.89285714])), ('rec', array([ 0.91176471,  0.71428571])), ('fscor', array([ 0.82666667,  0.79365079])), ('supp', array([34, 35], dtype=int64))]confusion matrix:
+[[31  3]
+ [10 25]]

@@ -1,0 +1,11 @@
+This was testing the Non-PDF simple case, as described in Section 5.2 of my Report.
+This run used the Random Forest classifier with the tf-idf model.
+
+This was by far my most successful model.
+
+Positive Set:
+Non-PDF syllabi from summer work
+
+Negative Set:
+Non-PDF non-syllabi gathered by running the crawler without a classifier and selecting pages that weren't
+syllabi.

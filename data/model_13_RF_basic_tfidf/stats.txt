@@ -1,0 +1,10 @@
+Accuracy: 0.91 (+/- 0.02) [ensemble]
+Testing:
+After training on training set, test set evaluation: accuracy: 0.826086956522
+[('prec', array([ 0.775     ,  0.89655172])), ('rec', array([ 0.91176471,  0.74285714])), ('fscor', array([ 0.83783784,  0.8125    ])), ('supp', array([34, 35], dtype=int64))]confusion matrix:
+[[31  3]
+ [ 9 26]]
+
+Cross_validation avg precision: 0.943749231668(+/- 0.0358561045068)
+
+Cross_validation avg recall: 0.824242424242(+/- 0.160806050441)

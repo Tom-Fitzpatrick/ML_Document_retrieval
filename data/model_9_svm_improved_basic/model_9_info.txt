@@ -1,0 +1,10 @@
+Support Vector Machine, Bag of Words
+
+This was testing the Non-PDF improved case, as described in Section 5.2 of my Report.
+
+Positive Set:
+Non-PDF syllabi from summer work
+
+Negative Set:
+Non-PDF non-syllabi false positives from the earlier Non-PDF simple run combined with the
+selection of examples used in the Non-PDF simple case

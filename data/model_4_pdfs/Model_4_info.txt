@@ -1,0 +1,13 @@
+Random Forest, Bag of Words
+This was part of some experiments to build a pdf-only classifier and to see how it would perform.
+The sample set appeared to be too small to get a useful result however, so other areas were explored further.
+
+This was testing the Non-PDF simple case, as described in Section 5.2 of my Report.
+This run used the Random Forest classifier with the Bag of Words model.
+
+Positive Set:
+Non-PDF syllabi from summer work
+
+Negative Set:
+Non-PDF non-syllabi gathered by running the crawler without a classifier and selecting pages that weren't
+syllabi.
